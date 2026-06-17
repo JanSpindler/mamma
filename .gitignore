@@ -62,3 +62,7 @@ gui/backend/__pycache__/
 
 # OS junk.
 .DS_Store
+
+# Custom
+anchor_data/
+pytorch_sdf/

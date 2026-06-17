@@ -184,8 +184,13 @@ def synthesize_capture(
         "cams": cams,
         "sequences": {"000": {"name": seq_name}},
     }
+    # if layout == "videos" and videos_subdir and videos_subdir != "videos_crf24":
+    #     capture["videos_subdir"] = videos_subdir
+    # return capture
     if layout == "videos" and videos_subdir and videos_subdir != "videos_crf24":
         capture["videos_subdir"] = videos_subdir
+    elif layout == "images":                    # ← add this
+        capture["images_layout"] = True         # ← add this
     return capture
 
 
@@ -350,9 +355,21 @@ def materialize_run_config(
     # always wins.
     ma_cap = cfg.setdefault("ma_cap", {})
     if not ma_cap.get("videos_dir") and not ma_cap.get("images_root_dir"):
-        derived = _derive_videos_dir(capture_path, capture_data)
-        if derived:
-            ma_cap["videos_dir"] = derived
+        if capture_data.get("images_layout"):
+            _cr = capture_data.get("capture_root") or ""
+            if _cr:
+                if os.path.isabs(_cr):
+                    _anchored = _cr
+                else:
+                    _anchored = os.path.normpath(
+                        os.path.join(os.path.dirname(capture_path), _cr)
+                    )
+                _anchored = _make_repo_relative_when_possible(_anchored)
+                ma_cap["images_root_dir"] = os.path.join(_anchored, "{seq_name}")
+        else:                                                    # ← add
+            derived = _derive_videos_dir(capture_path, capture_data)
+            if derived:
+                ma_cap["videos_dir"] = derived
     if not ma_cap.get("calibration"):
         derived = _derive_calibration(capture_path, capture_data)
         if derived:

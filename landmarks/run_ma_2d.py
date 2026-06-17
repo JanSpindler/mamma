@@ -530,7 +530,7 @@ def main(args, out_folder, masks_folder, img_folder=None):
     model = build_model(cfg).to(device)
 
     logger.info(f"loading weights from: {args.weights}")
-    model.load_state_dict(torch.load(args.weights)['state_dict'])
+    model.load_state_dict(torch.load(args.weights, weights_only=False)['state_dict'])
     model.eval()
 
     # Resolve relative to this script (landmarks/) so the detector config

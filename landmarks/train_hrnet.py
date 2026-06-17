@@ -108,7 +108,7 @@ def main(cfg: DictConfig):
 
     if cfg.model_checkpoint is not None:
         logger.info(f'Loading model checkpoint from {cfg.model_checkpoint}')
-        model.load_state_dict(torch.load(cfg.model_checkpoint)['state_dict'], strict=False)
+        model.load_state_dict(torch.load(cfg.model_checkpoint, weights_only=False)['state_dict'], strict=False)
     else:
         logger.info(f'no model checkpoint provided')
     try: # Version 1.6

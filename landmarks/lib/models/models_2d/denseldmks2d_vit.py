@@ -87,7 +87,7 @@ class DenseLdmks2DViT(pl.LightningModule):
         if state_dict_pth is None:
             print("No state dict provided")
             return
-        state_dict = torch.load(state_dict_pth)['state_dict']
+        state_dict = torch.load(state_dict_pth, weights_only=False)['state_dict']
         keys = list(state_dict.keys())
         keys = [k for k in keys if 'keypoint_head' not in k]
 
