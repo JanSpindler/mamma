@@ -3,7 +3,7 @@
 import shutil
 from pathlib import Path
 
-PROCESSED_ROOT = Path("anchor_data/processed")
+PROCESSED_ROOT = Path("/lustre/mlnvme/data/jspindle_hpc-anchor/processed")
 
 
 def main() -> None:

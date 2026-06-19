@@ -1,0 +1,25 @@
+Launch Sequence
+
+cd /home/jspindle_hpc/Code/Comparison/mamma
+
+# one-time prep
+mkdir -p logs
+sshare -U                              # copy your account into the sbatch
+sinfo -p mlgpu -o "%P %l %G"           # confirm partition + time limit + A40
+module spider CUDA                     # confirm exact module name
+
+# (recommended) single-task dry run first
+sbatch --array=0 submit_anchor.sbatch
+squeue --me
+tail -f logs/mamma_thuman_*_0.out      # watch it reach the GPU / pipeline
+
+# full launch once the dry run looks healthy
+sbatch submit_anchor.sbatch
+
+Monitor
+
+squeue --me                                              # running/pending
+sacct -j <jobid> -X --format=JobID,State,ExitCode,Elapsed
+sacct -j <jobid> -X -n --format=State | sort | uniq -c   # tally by state
+grep -iE "error|traceback|cuda|fail" logs/mamma_thuman_*_*.err
+scancel <jobid>

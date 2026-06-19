@@ -29,8 +29,8 @@ import numpy as np
 from PIL import Image as PILImage
 from tqdm import tqdm
 
-SRC_ROOT = Path("anchor_data/anchor_thuman")
-DST_ROOT = Path("anchor_data/processed")
+SRC_ROOT = Path("/lustre/mlnvme/data/jspindle_hpc-anchor/anchor_thuman")
+DST_ROOT = Path("/lustre/mlnvme/data/jspindle_hpc-anchor/processed")
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
