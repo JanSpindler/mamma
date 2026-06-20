@@ -10,7 +10,8 @@ Output:  anchor_data/processed/<subject>/
            calibration.json          (MAMMA OpenCV-flat format)
 
 Run:
-    python scripts/convert_thuman.py
+    python scripts/convert_thuman.py                       # all subjects
+    python scripts/convert_thuman.py subject00 subject01   # subset
 
 Then per subject:
     python -m inference run \\
@@ -21,6 +22,7 @@ Then per subject:
         --out-tag  thuman4 -v
 """
 
+import argparse
 import json
 import shutil
 from pathlib import Path
@@ -29,8 +31,8 @@ import numpy as np
 from PIL import Image as PILImage
 from tqdm import tqdm
 
-SRC_ROOT = Path("/lustre/mlnvme/data/jspindle_hpc-anchor/anchor_thuman")
-DST_ROOT = Path("/lustre/mlnvme/data/jspindle_hpc-anchor/processed")
+SRC_ROOT = Path("anchor_data/anchor_thuman")
+DST_ROOT = Path("anchor_data/processed")
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
@@ -91,13 +93,12 @@ def process_subject(subject_dir: Path, dst_dir: Path) -> None:
     image_size = detect_image_size(images_src)
     print(f"  detected image size: {image_size[0]}x{image_size[1]}")
 
-    # --- images: copy each camera subdir ---
-    images_dst = dst_dir / "images"
-    images_dst.mkdir(parents=True, exist_ok=True)
+    # --- images: copy each camera subdir directly under the subject dir ---
+    dst_dir.mkdir(parents=True, exist_ok=True)
 
     cam_dirs = sorted(d for d in images_src.iterdir() if d.is_dir())
     for cam_dir in tqdm(cam_dirs, desc=subject_dir.name, unit="cam"):
-        dst_cam = images_dst / cam_dir.name
+        dst_cam = dst_dir / cam_dir.name
         if dst_cam.exists():
             shutil.rmtree(dst_cam)
         copy_cam_dir(cam_dir, dst_cam)
@@ -111,12 +112,32 @@ def process_subject(subject_dir: Path, dst_dir: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "subjects",
+        nargs="*",
+        help="Subject names to convert (default: all subdirs under SRC_ROOT)",
+    )
+    args = parser.parse_args()
+
     if not SRC_ROOT.is_dir():
         raise SystemExit(f"Source directory not found: {SRC_ROOT}")
 
     subjects = sorted(p for p in SRC_ROOT.iterdir() if p.is_dir())
     if not subjects:
         raise SystemExit(f"No subject subdirectories found under {SRC_ROOT}")
+
+    if args.subjects:
+        wanted = set(args.subjects)
+        subjects = [p for p in subjects if p.name in wanted]
+        missing = wanted - {p.name for p in subjects}
+        if missing:
+            raise SystemExit(
+                f"Subject(s) not found under {SRC_ROOT}: {sorted(missing)}"
+            )
 
     print(f"Found {len(subjects)} subject(s): {[s.name for s in subjects]}")
 
