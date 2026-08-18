@@ -1,0 +1,64 @@
+# Preset for the VR-eyetracking dome capture (32 cams, 2304x2664 portrait, 25 fps).
+# Copy of full.yaml with two deltas:
+#   * ma_cap --fps 25 -- inference/config.py hardcodes cam_fps: 30 in the
+#     synthesized capture and run_ma_cap._ingest_images_root_mode hardcodes 30
+#     again in images mode, so this flag is the only way to record 25.
+#   * ma_masks --skip_masked_outputs/--skip_collage -- suppresses one full-res
+#     overlay JPEG per frame per camera, which is the dominant disk cost at
+#     this resolution and camera count.
+# Set global.start_frame/end_frame for a short smoke run before the full pass.
+global:
+  version: 1.0
+  username: ''
+  out_dir: output
+  jobs_log_dir: output/logs/jobs
+  bind: []
+  conda_env: mamma
+ma_cap:
+  engine: conda
+  enabled: true
+  dependencies: []
+  script: run_ma_cap.py
+  repo_path: capture
+  flags:
+  - --fps 25
+ma_masks:
+  engine: conda
+  enabled: true
+  dependencies:
+  - ma_cap
+  script: run_ma_masks.py
+  repo_path: segmentation
+  flags:
+  - --sam_version sam2
+  undistort: false
+ma_2d:
+  engine: conda
+  enabled: true
+  dependencies:
+  - ma_masks
+  script: run_ma_2d.py
+  repo_path: landmarks
+  config_path: configs/train/models_2d/config_mammanet_mask_512.yaml
+  weights: data/weights/ma_2d/mamma_mask_full_cvpr.ckpt
+  flags: []
+  undistort: false
+ma_3d:
+  engine: conda
+  enabled: true
+  dependencies:
+  - ma_2d
+  script: run_ma_3d.py
+  repo_path: optimization
+  config_file: config_files/contact_configs/config_real_gmf_small_vals_detr_exp_no_vtemplate.yaml
+  flags: []
+ma_vis:
+  engine: conda
+  enabled: true
+  dependencies:
+  - ma_2d
+  - ma_3d
+  script: run_ma_vis.py
+  repo_path: visualization
+  flags: []
+  undistort: false
